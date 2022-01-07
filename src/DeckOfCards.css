@@ -1,0 +1,14 @@
+.DeckOfCards {
+    display: inline;
+}
+
+.DeckOfCards-card-content {
+    margin-top: 50px;
+}
+
+img {
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin: auto;
+}
