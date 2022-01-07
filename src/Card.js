@@ -1,3 +1,5 @@
+// renders single card that recieved from deck
+
 const Card = ({ imgURL, value, suit, angle = 3, randomX = 3, randomY = 3 }) => {
     return (
         <div>

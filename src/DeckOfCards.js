@@ -5,25 +5,45 @@ import axios from "axios";
 
 const DeckOfCards = () => {
     const deckId = useRef();
-    const [remaining, setRemaining] = useState(52);
+    const timerId = useRef();
+    const [autoDraw, setAutoDraw] = useState(false);
     const [cards, setCards] = useState([]);
 
-    useEffect(function createDeckWhenMounted() {
+    // Load new deck from Api
+    useEffect(() => {
         async function NewDeck() {
             try {
                 const res = await axios.get(
                     "http://deckofcardsapi.com/api/deck/new/"
                 );
-                console.log(res.data.deck_id);
                 deckId.current = res.data.deck_id;
             } catch (err) {
-                throw `New deck can't created ${err}`;
+                alert(err);
             }
         }
         NewDeck();
-    }, []);
+    }, [deckId]);
 
-    const handleCard = async () => {
+    // Draw card every second if autoDraw is true and timerId is null
+    useEffect(() => {
+        if (autoDraw && !timerId.current) {
+            timerId.current = setInterval(async () => {
+                await getCard();
+            }, 1000);
+        }
+
+        return () => {
+            clearInterval(timerId.current);
+            timerId.current = null;
+        };
+    }, [cards, autoDraw, deckId]);
+
+    const toggleDrawing = () => {
+        setAutoDraw(!autoDraw);
+    };
+
+    // Get card form Api and set angle and x, y
+    const getCard = async () => {
         let angle = Math.random() * 90 - 45;
         let randomX = Math.random() * 40 - 20;
         let randomY = Math.random() * 40 - 20;
@@ -32,22 +52,27 @@ const DeckOfCards = () => {
             const res = await axios.get(
                 `https://deckofcardsapi.com/api/deck/${deckId.current}/draw/`
             );
-            console.log(res.data.cards[0]);
-            setRemaining(res.data.remaining);
+
+            if (res.data.remaining === 0) {
+                setAutoDraw(false);
+                throw new Error("no cards remaining!");
+            }
+
             const cardId = 52 - res.data.remaining;
             setCards([
                 ...cards,
                 { ...res.data.cards[0], id: cardId, angle, randomX, randomY },
             ]);
         } catch (err) {
-            throw `Can't get card ${err}`;
+            alert(err);
         }
     };
+
     return (
         <div className="DeckOfCards">
-            {remaining !== 0 && (
-                <button onClick={handleCard}>GIMME ACARD!</button>
-            )}
+            <button onClick={toggleDrawing}>
+                {autoDraw ? `Stop` : `Start`} drawing!
+            </button>
             <div className="DeckOfCards-card-content">
                 {cards.map((card) => (
                     <Card
